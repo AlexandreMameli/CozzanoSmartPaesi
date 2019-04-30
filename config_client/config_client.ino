@@ -6,11 +6,9 @@
   with the RH_RF95 class. RH_RF95 class does not provide for addressing or
   reliability, so you should only use RH_RF95 if you do not need the higher
   level messaging abilities.
-
   It is designed to work with the other example LoRa Simple Server
   User need to use the modified RadioHead library from:
   https://github.com/dragino/RadioHead
-
   modified 16 11 2016
   by Edwin Chen <support@dragino.com>
   Dragino Technology Co., Limited
@@ -50,6 +48,8 @@ union U {
 RH_RF95 rf95;
 float frequency = 868.0;
 
+U uTemp, uPress, uHumi, uGas, uF1, uF2, uF3;
+
 void setup() 
 {
   Serial.begin(9600);
@@ -70,12 +70,21 @@ void setup()
   
   // Setup Coding Rate:5(4/5),6(4/6),7(4/7),8(4/8) 
   rf95.setCodingRate4(5);
+
+  while (!bme680.init()) 
+  {
+    Serial.println("bme680 init failed ! can't find device!");
+  delay(10000);
+  }
 }
 
 void loop()
 {
-  U uTemp, uPress, uHumi, uGas, uF1, uF2, uF3;
-
+ if (bme680.read_sensor_data()) 
+  {
+    Serial.println("Failed to perform reading :(");
+  }
+  
   uTemp.f = bme680.sensor_result_value.temperature;
   uPress.f = bme680.sensor_result_value.pressure;
   uHumi.f = bme680.sensor_result_value.humidity;
@@ -83,6 +92,8 @@ void loop()
   uF1.f = analogRead(A0);
   uF2.f = analogRead(A1);
   uF3.f = analogRead(A2);
+
+  Serial.println(uTemp.f);
   
   Serial.println("Sending to LoRa Server");
   // Send a message to LoRa Server
