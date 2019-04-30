@@ -19,12 +19,20 @@
 
 #include <SPI.h>
 #include <RH_RF95.h>
-
+#define  BUF_SIZE     20
 // Singleton instance of the radio driver
 RH_RF95 rf95;
 
 int led = A2;
 float frequency = 868.0;
+uint8_t id;
+
+union U{
+  float f;
+  uint8_t i[4];
+};
+
+U Utemp, Uhumid, Upress, Ugas, Uflame1, Uflame2, Uflame3;
 
 void setup() 
 {
@@ -50,25 +58,45 @@ void loop()
     // Should be a message for us now   
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
     uint8_t len = sizeof(buf);
-    if (rf95.recv(buf, &len))
+    if (rf95.recv(buf, &len) && buf[0]==2)
     {
       digitalWrite(led, HIGH);
       RH_RF95::printBuffer("request: ", buf, len);
       Serial.print("got request: ");
-      Serial.println((char*)buf);
       Serial.print("RSSI: ");
       Serial.println(rf95.lastRssi(), DEC);
+
+      //Parser les données reçues
+
+      for(int j = 0 ; j <= 3 ; j++){
+      Utemp.i[j] = buf[j+1];
+      Upress.i[j] = buf[j+5];
+      Uhumid.i[j] = buf[j+9];
+      Ugas.i[j] = buf[j+13];
+      Uflame1.i[j] = buf[j+17];
+      Uflame2.i[j] = buf[j+21];
+      Uflame3.i[j] = buf[j+25];
+      }
       
+      Serial.println(Utemp.f);
+      Serial.println(Upress.f);
+      Serial.println(Uhumid.f);
+      Serial.println(Ugas.f);
+      Serial.println(Uflame1.f);
+      Serial.println(Uflame2.f);
+      Serial.println(Uflame3.f);
+     
+
       // Send a reply
-      uint8_t data[] = "And hello back to you";
+      uint8_t data[] = "Serveur quentin (test 2)";
       rf95.send(data, sizeof(data));
       rf95.waitPacketSent();
-      Serial.println("Sent a reply");
       digitalWrite(led, LOW);
     }
     else
     {
-      Serial.println("recv failed");
+      Serial.println("recv failed (Filtrage ID)");
     }
   }
+
 }
