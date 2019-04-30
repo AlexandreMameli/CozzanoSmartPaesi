@@ -94,13 +94,17 @@ void loop()
   uF3.f = analogRead(A2);
 
   Serial.println(uTemp.f);
+  Serial.println(uPress.f);
+  Serial.println(uHumi.f);
+  Serial.println(uGas.f);
+  Serial.println(uF1.f);
+  Serial.println(uF2.f);
+  Serial.println(uF3.f);
   
   Serial.println("Sending to LoRa Server");
   // Send a message to LoRa Server
   uint8_t dataOut[] = {id, uTemp.i[0], uTemp.i[1], uTemp.i[2], uTemp.i[3], uPress.i[0], uPress.i[1], uPress.i[2], uPress.i[3], uHumi.i[0], uHumi.i[1], uHumi.i[2], uHumi.i[3], uGas.i[0], uGas.i[1], uGas.i[2], uGas.i[3], uF1.i[0], uF1.i[1], uF1.i[2], uF1.i[3], uF2.i[0], uF2.i[1], uF2.i[2], uF2.i[3], uF3.i[0], uF3.i[1], uF3.i[2], uF3.i[3]};
   rf95.send(dataOut, sizeof(dataOut));
-
-  Serial.println(dataOut[1]);
   
   rf95.waitPacketSent();
   // Now wait for a reply
