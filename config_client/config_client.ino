@@ -19,6 +19,33 @@
 #include <SPI.h>
 #include <RH_RF95.h>
 
+#include "seeed_bme680.h"
+
+#define BME_SCK 13
+#define BME_MISO 12
+#define BME_MOSI 11
+#define BME_CS 10
+
+
+#define IIC_ADDR  uint8_t(0x76)
+
+
+/**  NOTE!!!!!!!!!!!!  Select the communication protocol correctly **/
+
+Seeed_BME680 bme680(IIC_ADDR); /* IIC PROTOCOL */
+//Seeed_BME680 bme680;             /* SPI PROTOCOL */
+//Seeed_BME680 bme680(BME_CS, BME_MOSI, BME_MISO,  BME_SCK);/*SPI PROTOCOL*/
+
+char* dataBuff;
+String dataString = "";
+
+uint8_t id = 2;
+
+union U {
+    float f;
+    uint8_t i[4];
+  };
+
 // Singleton instance of the radio driver
 RH_RF95 rf95;
 float frequency = 868.0;
@@ -47,10 +74,20 @@ void setup()
 
 void loop()
 {
+  U uTemp, uPress, uHumi, uGas, uF1, uF2, uF3;
+
+  uTemp.f = bme680.sensor_result_value.temperature;
+  uPress.f = bme680.sensor_result_value.pressure;
+  uHumi.f = bme680.sensor_result_value.humidity;
+  uGas.f = bme680.sensor_result_value.gas;
+  uF1.f = analogRead(A0);
+  uF2.f = analogRead(A1);
+  uF3.f = analogRead(A2);
+  
   Serial.println("Sending to LoRa Server");
   // Send a message to LoRa Server
-  uint8_t data[] = "Hello, this is device 1";
-  rf95.send(data, sizeof(data));
+  uint8_t dataOut[] = {id, uTemp.i, uPress.i, uHumi.i, uGas.i, uF1.i, uF2.i, uF3.i};
+  rf95.send(dataOut, sizeof(dataOut));
   
   rf95.waitPacketSent();
   // Now wait for a reply
